@@ -33,6 +33,7 @@ class ViewController: UIViewController {
 }
 
 extension ViewController: CBPeripheralManagerDelegate {
+    // didUpdateState
     func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
         switch peripheralMangger.state {
         case .poweredOn:
@@ -54,6 +55,7 @@ extension ViewController: CBPeripheralManagerDelegate {
         serivce.characteristics = arrCharacteristics
         peripheralMangger.add(serivce)
     }
+//    didAdd service
     func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
         if error != nil {
             textInfo.text = textInfo.text + "\n \(error!.localizedDescription)"
@@ -72,12 +74,26 @@ extension ViewController: CBPeripheralManagerDelegate {
             while true {
                 i += 1
                 let strData = "\(i)".data(using: .utf8)!
+                self.peripheralMangger.updateValue(strData, for: self.arrCharacteristics[0], onSubscribedCentrals: nil)
                 DispatchQueue.main.async {
                     self.lblSend.text = "\(i)"
                 }
                 Thread.sleep(forTimeInterval: 1)
             }
         }
+    }
+    // didReceiveWrite
+    func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
+        let aRequest = requests.first
+        let strReceived = String(data: aRequest!.value!, encoding: .utf8)
+        if strReceived == "ON" {
+            switchPower.isOn = true
+            self.view.backgroundColor = UIColor.green
+        } else if strReceived == "OFF" {
+            switchPower.isOn = false
+            self.view.backgroundColor = UIColor.gray
+        }
+        peripheralMangger.respond(to: aRequest!, withResult: .success)
     }
 
 
